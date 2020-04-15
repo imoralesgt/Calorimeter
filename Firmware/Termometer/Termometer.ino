@@ -6,6 +6,10 @@
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
 
+
+#define SAMPLING_RATE 1.0 //Sampling rate in Hz (can't be faster than 1 Hz). Smaller than 1 Hz values are allowed
+#define SAMPLING_PERIOD (long)((1/SAMPLING_RATE)*1000) // Sampling period (miliseconds)
+
 //GPIOs
 #define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define TEMP_SENSOR    3 // One-wire pin for temperature sensor DS18B20
@@ -33,6 +37,9 @@ byte data[12];
 byte addr[8];
 float celsius, fahrenheit;
 
+//Globals for precise time measurement
+long currentTime;
+long lastTime;
 
 float getTemperature(){
   ds.reset();
@@ -115,6 +122,9 @@ void setup() {
     return;
   }
 
+  currentTime = millis();
+  lastTime = currentTime;
+
 }
 
 void loop() {
@@ -122,4 +132,10 @@ void loop() {
   temp = getTemperature();
   displayTemp(temp);
   Serial.println(temp);
+  
+  //1 second pause for precision sampling rate
+  do{
+    currentTime = millis();    
+  }while(SAMPLING_PERIOD > (currentTime - lastTime));
+  lastTime = millis();
 }
