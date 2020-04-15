@@ -8,7 +8,7 @@
 
 
 #define SAMPLING_RATE 1.0 //Sampling rate in Hz (can't be faster than 1 Hz). Smaller than 1 Hz values are allowed
-#define SAMPLING_PERIOD (long)((1/SAMPLING_RATE)*1000) // Sampling period (miliseconds)
+#define SAMPLING_PERIOD (long)((1.0/SAMPLING_RATE)*1000) // Sampling period (miliseconds)
 
 //GPIOs
 #define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
@@ -105,6 +105,9 @@ void setup() {
     for(;;); // Don't proceed, loop forever
   }
 
+  pinMode(TEMP_VCC, OUTPUT);
+  digitalWrite(TEMP_VCC, 1);
+
   display.display();
   delay(2000); // Pause for 2 seconds
 
@@ -114,28 +117,28 @@ void setup() {
 
   //Temperature sensor (DS18B20) intialization
 
-  pinMode(TEMP_VCC, OUTPUT);
-  digitalWrite(TEMP_VCC, 1);
   
   if(!ds.search(addr)){
     ds.reset_search();
     return;
   }
 
-  currentTime = millis();
+  currentTime = micros();
   lastTime = currentTime;
 
 }
 
 void loop() {
   volatile float temp;
+  
   temp = getTemperature();
   displayTemp(temp);
   Serial.println(temp);
+
   
-  //1 second pause for precision sampling rate
+  //Improving precision of sampling rate
   do{
-    currentTime = millis();    
-  }while(SAMPLING_PERIOD > (currentTime - lastTime));
-  lastTime = millis();
+    currentTime = micros();    
+  }while(SAMPLING_PERIOD*1000 > (currentTime - lastTime));
+  lastTime = micros();
 }
